@@ -15,6 +15,7 @@ public class FarkleModel {
     private static final int WINNING_SCORE = 10000;
 
     private int[] playerScores = new int[2];
+    private int currrentScore = 0;
     private int[] dice = new int[NUM_DICE];
     private int currentPlayer = 0;
     private Random random = new Random();
@@ -29,68 +30,93 @@ public class FarkleModel {
             dice[i] = random.nextInt(6) + 1;
         }
         System.out.println("Rolled dice: " + Arrays.toString(dice));
-        // Add scoring logic here if you want to auto-calculate
     }
 
     /**
+     * Checks if the current roll is a Farkle (no scoring dice).
+     * 
+     * @return true if it's a Farkle, false otherwise
+     */
+    private boolean isFarkle() {
+        boolean hasScoringDice = false;
+        for (int die : dice) {
+            if (die == 1 || die == 5) {
+                hasScoringDice = true;
+                break;
+            }
+        }
+        return !hasScoringDice;
+    }
+
+    /**
+     * 
      * Stores selected dice and calculates score.
      * 
      * @param input Comma-separated dice values
      */
     public void scoreDice(String input) {
         String[] keptDice = input.split(",");
-        int scoreThisTurn = 0;
 
         for (String die : keptDice) {
             try {
                 int dieIndex = Integer.parseInt(die.trim());
                 if (dice[dieIndex - 1] == 1) {
-                    scoreThisTurn += 100; // 1s are worth 100 points
+                    currrentScore += 100; // 1s are worth 100 points
                 } else if (dice[dieIndex - 1] == 5) {
-                    scoreThisTurn += 50; // 5s are worth 50 points
+                    currrentScore += 50; // 5s are worth 50 points
                 }
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input: " + die);
             }
         }
 
-        System.out.println("\nYou scored " + scoreThisTurn + " points!");
-        playerScores[currentPlayer] += scoreThisTurn;
+        System.out.println("\nYou scored " + currrentScore + " points!");
+        playerScores[currentPlayer] += currrentScore;
     }
 
     public void startTurn() {
+        rollsRemaining = 2; // Reset rolls for the new turn
+        currrentScore = 0; // Reset current score for the new turn
         printState();
         System.out.println("Player " + (currentPlayer + 1) + "'s turn.");
         System.out.println("\nPress Enter to roll the dice.");
         scanner.nextLine(); // Wait for user input
         rollDice();
 
-        while (rollsRemaining > 0) {
+        // Check for farkle
+        if (isFarkle()) {
+            System.out.println("Farkle! You lose all your points and your turn!");
+            endTurn();
+        } else {
 
-            System.out.println("Enter the dice you want to keep (comma-separated values) or 'r' to roll again:");
-            String keptDice = scanner.nextLine();
+            while (rollsRemaining > 0) {
 
-            if (keptDice.equalsIgnoreCase("r")) {
-                rollDice(); // Roll all dice
-                rollsRemaining--;
-                System.out.println("\nYou have " + (rollsRemaining) + " rolls remaining.");
-            } else {
-                scoreDice(keptDice);
-                System.out.println("\nYou have " + (rollsRemaining) + " rolls remaining.");
-                System.out.println("Do you want to end your turn? (y/n)");
-                String endTurn = scanner.nextLine();
+                System.out.println("Enter the dice you want to keep (comma-separated values) or 'r' to roll again:");
+                String keptDice = scanner.nextLine();
 
-                if (endTurn.equalsIgnoreCase("y")) {
-                    endTurn();
-                    return; // Exit the turn
-                } else {
-                    System.out.println("\nRerolling dice...");
-                    reRollDice(keptDice); // Only reroll if they kept dice
+                if (keptDice.equalsIgnoreCase("r")) {
+                    rollDice(); // Roll all dice
                     rollsRemaining--;
+                    System.out.println("\nYou have " + (rollsRemaining) + " rolls remaining.");
+                } else {
+                    scoreDice(keptDice);
+                    System.out.println("\nYou have " + (rollsRemaining) + " rolls remaining.");
+                    System.out.println("Do you want to end your turn? (y/n)");
+                    String endTurn = scanner.nextLine();
+
+                    if (endTurn.equalsIgnoreCase("y")) {
+                        endTurn();
+                        return; // Exit the turn
+                    } else {
+                        System.out.println("\nRerolling dice...");
+                        reRollDice(keptDice); // Only reroll if they kept dice
+                        rollsRemaining--;
+                    }
                 }
             }
         }
         System.out.println("You have no rolls remaining. Ending your turn.");
+
         endTurn();
 
     }
@@ -100,7 +126,6 @@ public class FarkleModel {
      */
     public void endTurn() {
         currentPlayer = (currentPlayer + 1) % 2;
-        rollsRemaining = 2; // Reset turns for the next player
     }
 
     /**
