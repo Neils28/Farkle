@@ -29,7 +29,7 @@ public class FarkleModel {
         for (int i = 0; i < dice.length; i++) {
             dice[i] = random.nextInt(6) + 1;
         }
-        System.out.println("Rolled dice: " + Arrays.toString(dice));
+        System.out.println("\nRolled dice: " + Arrays.toString(dice));
     }
 
     /**
@@ -56,6 +56,9 @@ public class FarkleModel {
      */
     public void scoreDice(String input) {
         String[] keptDice = input.split(",");
+        currrentScore = 0; // Reset current score for this turn
+
+        // if player has 0 points, they must have more than 500 points to score
 
         for (String die : keptDice) {
             try {
@@ -69,9 +72,7 @@ public class FarkleModel {
                 System.out.println("Invalid input: " + die);
             }
         }
-
-        System.out.println("\nYou scored " + currrentScore + " points!");
-        playerScores[currentPlayer] += currrentScore;
+        System.out.println("\nCurrent score this turn: " + currrentScore);
     }
 
     public void startTurn() {
@@ -85,7 +86,7 @@ public class FarkleModel {
 
         // Check for farkle
         if (isFarkle()) {
-            System.out.println("Farkle! You lose all your points and your turn!");
+            System.out.println("\nFarkle! You lose all your points and your turn!");
             endTurn();
         } else {
 
@@ -105,6 +106,7 @@ public class FarkleModel {
                     String endTurn = scanner.nextLine();
 
                     if (endTurn.equalsIgnoreCase("y")) {
+                        bankPoints();
                         endTurn();
                         return; // Exit the turn
                     } else {
@@ -114,11 +116,26 @@ public class FarkleModel {
                     }
                 }
             }
+            System.out.println("That was your last turn!");
+            scoreDice("1,2,3,4,5,6"); // Score all dice
+            bankPoints();
+            endTurn();
         }
-        System.out.println("You have no rolls remaining. Ending your turn.");
 
-        endTurn();
+    }
 
+    /**
+     * Banks the current score and adds it to the player's total score.
+     */
+    public void bankPoints() {
+        if (((playerScores[0] == 0) && (currrentScore < 500)) || ((playerScores[1] == 0) && (currrentScore < 500))) {
+            System.out.println(
+                    "\nIn order to bank your points for the first time, you must have a running total of 500 points before you stop rolling.");
+        } else {
+            playerScores[currentPlayer] += currrentScore;
+            System.out.println("\nYou banked " + currrentScore + " points!");
+            currrentScore = 0; // Reset current score after banking
+        }
     }
 
     /**

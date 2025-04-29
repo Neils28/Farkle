@@ -12,7 +12,7 @@ public class FarkleDriver {
         System.out.println("Welcome to Farkle!");
         System.out.println("==================\n");
         System.out.println("Player 1 and Player 2 will take turns rolling dice.");
-        System.out.println("The first player to reach 100 points wins the game.");
+        System.out.println("The first player to reach 10,000 points wins the game.");
         System.out.println("Each player rolls 6 dice and scores points based on the rolled values.");
         System.out.println("If a player rolls no scoring dice, they lose their turn and score 0 points.");
         System.out.println(
