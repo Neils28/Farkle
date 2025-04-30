@@ -1,3 +1,5 @@
+import farkle.FarkleModel;
+
 /**
  * FarkleDriver handles the console-based interaction for the two-player game of
  * Farkle.

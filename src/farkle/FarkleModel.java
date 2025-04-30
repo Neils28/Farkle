@@ -1,3 +1,5 @@
+package farkle;
+
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
@@ -182,6 +184,10 @@ public class FarkleModel {
         return playerScores[player];
     }
 
+    public int getCurrentScore() {
+        return currrentScore;
+    }
+
     public void reRollDice(String keptDice) {
         // Logic to re-roll only the non-kept dice
         String[] tokens = keptDice.split(",");
@@ -200,5 +206,9 @@ public class FarkleModel {
             }
         }
         System.out.println("Re-rolled dice: " + Arrays.toString(dice));
+    }
+
+    public int[] getDice() {
+        return dice;
     }
 }
