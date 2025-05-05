@@ -1,142 +1,177 @@
 package farkle;
 
-import java.util.Arrays;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
-import java.util.InputMismatchException;
-import java.util.NoSuchElementException;
-
-/**
- * FarkleModel encapsulates the logic and state of the Farkle game.
- */
 public class FarkleModel {
 
-    // Constants for the game
     private static final int NUM_DICE = 6;
     private static final int WINNING_SCORE = 10000;
 
     private int[] playerScores = new int[2];
-    private int currrentScore = 0;
+    private int currentScore = 0;
     private int[] dice = new int[NUM_DICE];
     private int currentPlayer = 0;
     private Random random = new Random();
-    private Scanner scanner = new Scanner(System.in);
     private int rollsRemaining = 2;
 
     /**
      * Rolls all 6 dice randomly.
      */
     public void rollDice() {
-        for (int i = 0; i < dice.length; i++) {
+        for (int i = 0; i < NUM_DICE; i++) {
             dice[i] = random.nextInt(6) + 1;
         }
         System.out.println("\nRolled dice: " + Arrays.toString(dice));
     }
 
     /**
-     * Checks if the current roll is a Farkle (no scoring dice).
+     * Re-rolls only the dice that are not kept.
      * 
-     * @return true if it's a Farkle, false otherwise
+     * @param keptDice indices (1-based) of kept dice
+     */
+    public void reRollDice(String keptDice) {
+        boolean[] keep = new boolean[NUM_DICE];
+        String[] tokens = keptDice.split(",");
+        for (String token : tokens) {
+            try {
+                int idx = Integer.parseInt(token.trim()) - 1;
+                if (idx >= 0 && idx < NUM_DICE) {
+                    keep[idx] = true;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid index: " + token);
+            }
+        }
+
+        for (int i = 0; i < NUM_DICE; i++) {
+            if (!keep[i]) {
+                dice[i] = random.nextInt(6) + 1;
+            }
+        }
+        System.out.println("Re-rolled dice: " + Arrays.toString(dice));
+    }
+
+    /**
+     * Calculates the score for the selected dice values.
+     *
+     * @param input String of comma-separated indices (1-based)
+     */
+    public void scoreDice(String input) {
+        String[] tokens = input.split(",");
+        List<Integer> selectedDice = new ArrayList<>();
+        for (String token : tokens) {
+            try {
+                int idx = Integer.parseInt(token.trim()) - 1;
+                if (idx >= 0 && idx < NUM_DICE) {
+                    selectedDice.add(dice[idx]);
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input: " + token);
+            }
+        }
+
+        int points = calculateScore(selectedDice);
+        if (points > 0) {
+            currentScore += points;
+            System.out.println("Scored: " + points + " points this round. Total this turn: " + currentScore);
+        } else {
+            System.out.println("No valid scoring combination selected.");
+        }
+    }
+
+    /**
+     * Checks if the current roll is a Farkle (no scoring dice).
      */
     private boolean isFarkle() {
-        boolean hasScoringDice = false;
+        List<Integer> rollList = new ArrayList<>();
         for (int die : dice) {
-            if (die == 1 || die == 5) {
-                hasScoringDice = true;
+            rollList.add(die);
+        }
+        return calculateScore(rollList) == 0;
+    }
+
+    /**
+     * Calculates score for a list of dice values.
+     */
+    private int calculateScore(List<Integer> diceList) {
+        int[] counts = new int[7]; // Index 1-6
+        for (int die : diceList) {
+            counts[die]++;
+        }
+
+        int score = 0;
+
+        // Six of a kind
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 6) {
+                return 3000;
+            }
+        }
+
+        // Five of a kind
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 5) {
+                score += 2000;
+                counts[i] = 0;
+            }
+        }
+
+        // Four of a kind
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 4) {
+                score += 1000;
+                counts[i] = 0;
+            }
+        }
+
+        // Three pairs
+        int pairCount = 0;
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 2) {
+                pairCount++;
+            }
+        }
+        if (pairCount == 3) {
+            return 1500;
+        }
+
+        // Straight (1-6)
+        boolean isStraight = true;
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] != 1) {
+                isStraight = false;
                 break;
             }
         }
-        return !hasScoringDice;
+        if (isStraight) {
+            return 1500;
+        }
+
+        // Three of a kind
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] >= 3) {
+                score += (i == 1) ? 1000 : i * 100;
+                counts[i] -= 3;
+            }
+        }
+
+        // Ones and fives (outside sets)
+        score += counts[1] * 100;
+        score += counts[5] * 50;
+
+        return score;
     }
 
     /**
-     * 
-     * Stores selected dice and calculates score.
-     * 
-     * @param input Comma-separated dice values
-     */
-    public void scoreDice(String input) {
-        String[] keptDice = input.split(",");
-        currrentScore = 0; // Reset current score for this turn
-
-        // if player has 0 points, they must have more than 500 points to score
-
-        for (String die : keptDice) {
-            try {
-                int dieIndex = Integer.parseInt(die.trim());
-                if (dice[dieIndex - 1] == 1) {
-                    currrentScore += 100; // 1s are worth 100 points
-                } else if (dice[dieIndex - 1] == 5) {
-                    currrentScore += 50; // 5s are worth 50 points
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input: " + die);
-            }
-        }
-        System.out.println("\nCurrent score this turn: " + currrentScore);
-    }
-
-    public void startTurn() {
-        rollsRemaining = 2; // Reset rolls for the new turn
-        currrentScore = 0; // Reset current score for the new turn
-        printState();
-        System.out.println("Player " + (currentPlayer + 1) + "'s turn.");
-        System.out.println("\nPress Enter to roll the dice.");
-        scanner.nextLine(); // Wait for user input
-        rollDice();
-
-        // Check for farkle
-        if (isFarkle()) {
-            System.out.println("\nFarkle! You lose all your points and your turn!");
-            endTurn();
-        } else {
-
-            while (rollsRemaining > 0) {
-
-                System.out.println("Enter the dice you want to keep (comma-separated values) or 'r' to roll again:");
-                String keptDice = scanner.nextLine();
-
-                if (keptDice.equalsIgnoreCase("r")) {
-                    rollDice(); // Roll all dice
-                    rollsRemaining--;
-                    System.out.println("\nYou have " + (rollsRemaining) + " rolls remaining.");
-                } else {
-                    scoreDice(keptDice);
-                    System.out.println("\nYou have " + (rollsRemaining) + " rolls remaining.");
-                    System.out.println("Do you want to end your turn? (y/n)");
-                    String endTurn = scanner.nextLine();
-
-                    if (endTurn.equalsIgnoreCase("y")) {
-                        bankPoints();
-                        endTurn();
-                        return; // Exit the turn
-                    } else {
-                        System.out.println("\nRerolling dice...");
-                        reRollDice(keptDice); // Only reroll if they kept dice
-                        rollsRemaining--;
-                    }
-                }
-            }
-            System.out.println("That was your last turn!");
-            scoreDice("1,2,3,4,5,6"); // Score all dice
-            bankPoints();
-            endTurn();
-        }
-
-    }
-
-    /**
-     * Banks the current score and adds it to the player's total score.
+     * Banks the current score if valid.
      */
     public void bankPoints() {
-        if (((playerScores[0] == 0) && (currrentScore < 500)) || ((playerScores[1] == 0) && (currrentScore < 500))) {
-            System.out.println(
-                    "\nIn order to bank your points for the first time, you must have a running total of 500 points before you stop rolling.");
+        if (playerScores[currentPlayer] == 0 && currentScore < 500) {
+            System.out.println("You need at least 500 points to get on the board.");
         } else {
-            playerScores[currentPlayer] += currrentScore;
-            System.out.println("\nYou banked " + currrentScore + " points!");
-            currrentScore = 0; // Reset current score after banking
+            playerScores[currentPlayer] += currentScore;
+            System.out.println("Banked " + currentScore + " points.");
+            currentScore = 0;
         }
     }
 
@@ -144,71 +179,57 @@ public class FarkleModel {
      * Ends the current player's turn.
      */
     public void endTurn() {
+        currentScore = 0;
+        rollsRemaining = 2;
         currentPlayer = (currentPlayer + 1) % 2;
     }
 
-    /**
-     * Prints the current scores of both players.
-     */
-    public void printState() {
-        System.out.println("\nPlayer 1 Score: " + playerScores[0]);
-        System.out.println("Player 2 Score: " + playerScores[1] + "\n");
+    public void startTurn() {
+        currentScore = 0;
+        rollsRemaining = 2;
+        System.out.println("Player " + (currentPlayer + 1) + "'s turn.");
+        rollDice();
+
+        if (isFarkle()) {
+            System.out.println("Farkle! No points this turn.");
+            endTurn();
+        }
     }
 
-    /**
-     * @return current player index (0 or 1)
-     */
+    // Getter methods for controller/view
+    public int[] getDice() {
+        return dice;
+    }
+
+    public int getCurrentScore() {
+        return currentScore;
+    }
+
     public int getCurrentPlayer() {
         return currentPlayer;
     }
 
-    /**
-     * @return true if a player has reached 100 or more points
-     */
-    public boolean isGameOver() {
-        return playerScores[0] >= WINNING_SCORE || playerScores[1] >= WINNING_SCORE;
-    }
-
-    /**
-     * @return winner's index
-     */
-    public int getWinner() {
-        return playerScores[0] >= WINNING_SCORE ? 0 : 1;
-    }
-
-    /**
-     * @param player Player index
-     * @return Score of the player
-     */
     public int getPlayerScore(int player) {
         return playerScores[player];
     }
 
-    public int getCurrentScore() {
-        return currrentScore;
+    public boolean isGameOver() {
+        return playerScores[0] >= WINNING_SCORE || playerScores[1] >= WINNING_SCORE;
     }
 
-    public void reRollDice(String keptDice) {
-        // Logic to re-roll only the non-kept dice
-        String[] tokens = keptDice.split(",");
-        boolean[] kept = new boolean[dice.length];
-        for (String token : tokens) {
-            try {
-                kept[Integer.parseInt(token.trim()) - 1] = true;
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input: " + token);
-            }
-        }
-
-        for (int i = 0; i < dice.length; i++) {
-            if (!kept[i]) {
-                dice[i] = random.nextInt(6) + 1;
-            }
-        }
-        System.out.println("Re-rolled dice: " + Arrays.toString(dice));
+    public int getWinner() {
+        return playerScores[0] >= WINNING_SCORE ? 0 : 1;
     }
 
-    public int[] getDice() {
-        return dice;
+    public int getRollsRemaining() {
+        return rollsRemaining;
+    }
+
+    public void decrementRolls() {
+        if (rollsRemaining > 0) rollsRemaining--;
+    }
+
+    public void resetRolls() {
+        rollsRemaining = 2;
     }
 }
