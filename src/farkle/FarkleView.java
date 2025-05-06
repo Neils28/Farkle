@@ -7,9 +7,15 @@ public class FarkleView extends JFrame {
 
     private JButton rollButton;
     private JButton bankPointsButton;
+    private JButton endTurnButton;
     private JLabel[] diceLabels;
     private JPanel dicePanel;
     private JLabel currentScoreLabel;
+    private JLabel player1ScoreLabel;
+    private JLabel player2ScoreLabel;
+    private JLabel turnsLeft;
+    private JLabel turnLabel;
+    private JRadioButton[] diceButtons = new JRadioButton[6];
 
     public FarkleView() {
 
@@ -17,12 +23,17 @@ public class FarkleView extends JFrame {
         this.setTitle("Farkle Game");
         this.setSize(600, 300);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // Set the location of the window to the center of the screen
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int x = (screenSize.width - this.getWidth()) / 2;
+        int y = (screenSize.height - this.getHeight()) / 2;
+        this.setLocation(x, y);
         this.setLayout(new BorderLayout());
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        JLabel turnLabel = new JLabel("Player 1's turn", SwingConstants.CENTER);
+        turnLabel = new JLabel("Player 1's Turn", SwingConstants.CENTER);
         turnLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         mainPanel.add(turnLabel);
 
@@ -41,35 +52,42 @@ public class FarkleView extends JFrame {
         }
         mainPanel.add(dicePanel);
 
-        JPanel radioPanel = new JPanel();
-        radioPanel.setLayout(new GridLayout(1, 6, 10, 0));
+        JPanel checkBoxPanel = new JPanel();
+        checkBoxPanel.setLayout(new GridLayout(1, 6, 10, 0));
         for (int i = 0; i < 6; i++) {
-            JPanel cellPanel = new JPanel();
-            cellPanel.setLayout(new BoxLayout(cellPanel, BoxLayout.Y_AXIS));
+            JPanel radioPanel = new JPanel();
+            radioPanel.setLayout(new BoxLayout(radioPanel, BoxLayout.Y_AXIS));
             JLabel spacer = new JLabel(); // Optional spacer
             spacer.setPreferredSize(new Dimension(50, 0));
-            JCheckBox diceCheckBox = new JCheckBox();
-            diceCheckBox.setAlignmentX(Component.CENTER_ALIGNMENT);
-            cellPanel.add(Box.createVerticalStrut(5));
-            cellPanel.add(diceCheckBox);
-            radioPanel.add(cellPanel);
+            diceButtons[i] = new JRadioButton();
+            JRadioButton diceRadioButton = diceButtons[i];
+            diceRadioButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+            radioPanel.add(Box.createVerticalStrut(5));
+            radioPanel.add(diceRadioButton);
+            checkBoxPanel.add(radioPanel);
         }
-        mainPanel.add(radioPanel);
+        mainPanel.add(checkBoxPanel);
 
         currentScoreLabel = new JLabel("Current Turn Score: 0", SwingConstants.CENTER);
         currentScoreLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         mainPanel.add(currentScoreLabel);
 
+        turnsLeft = new JLabel("Rolls Left: 3", SwingConstants.CENTER);
+        turnsLeft.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(turnsLeft);
+
         JPanel buttonPanel = new JPanel();
         rollButton = new JButton("Roll Dice");
         bankPointsButton = new JButton("Bank Points");
+        endTurnButton = new JButton("End Turn");
         buttonPanel.add(rollButton);
         buttonPanel.add(bankPointsButton);
+        buttonPanel.add(endTurnButton);
         mainPanel.add(buttonPanel);
 
         JPanel scorePanel = new JPanel(new GridLayout(1, 2));
-        JLabel player1ScoreLabel = new JLabel("Player 1 Score: 0", SwingConstants.CENTER);
-        JLabel player2ScoreLabel = new JLabel("Player 2 Score: 0", SwingConstants.CENTER);
+        player1ScoreLabel = new JLabel("Player 1 Score: 0", SwingConstants.CENTER);
+        player2ScoreLabel = new JLabel("Player 2 Score: 0", SwingConstants.CENTER);
         scorePanel.add(player1ScoreLabel);
         scorePanel.add(player2ScoreLabel);
         mainPanel.add(scorePanel);
@@ -86,12 +104,24 @@ public class FarkleView extends JFrame {
         return bankPointsButton;
     }
 
-    public void updateScoreDisplay(int score) {
-        // This method may need updating or removal depending on usage
+    public JButton getEndTurnButton() {
+        return endTurnButton;
+    }
+
+    public void updateScoreDisplay(int score, int player) {
+        if (player == 0) {
+            player1ScoreLabel.setText("Player 1 Score: " + score);
+        } else {
+            player2ScoreLabel.setText("Player 2 Score: " + score);
+        }
     }
 
     public void updateCurrentScore(int score) {
         currentScoreLabel.setText("Current Turn Score: " + score);
+    }
+
+    public void updateRollsLeft(int rollsLeft) {
+        turnsLeft.setText("Rolls Left: " + rollsLeft);
     }
 
     public void updateDiceDisplay(int[] dice) {
@@ -102,6 +132,38 @@ public class FarkleView extends JFrame {
             ImageIcon icon = new ImageIcon(scaledImage);
             diceLabels[i].setIcon(icon);
         }
+    }
+
+    public void resetDiceDisplay() {
+        for (int i = 0; i < diceLabels.length; i++) {
+            diceLabels[i].setIcon(null);
+        }
+    }
+
+    public void updateTurnLabel(int currentPlayer) {
+        turnLabel.setText("Player " + (currentPlayer + 1) + "'s Turn");
+    }
+
+    public void disableRollButton() {
+        rollButton.setEnabled(false);
+    }
+
+    public void enableRollButton() {
+        rollButton.setEnabled(true);
+    }
+
+    public JRadioButton[] getDiceButtons() {
+        return diceButtons;
+    }
+
+    public void resetRadioButtons() {
+        for (JRadioButton button : diceButtons) {
+            button.setSelected(false);
+        }
+    }
+
+    public void resetCurrenScore(int score) {
+        currentScoreLabel.setText("Current Turn Score: " + score);
     }
 
 }

@@ -23,7 +23,7 @@ public class FarkleDriver {
 
         // Main game loop
         while (!game.isGameOver()) {
-            game.startTurn();
+            // game.startTurn();
         }
         System.out.println("Player " + (game.getWinner() + 1) + " wins the game with "
                 + game.getPlayerScore(game.getWinner()) + " points!");

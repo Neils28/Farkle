@@ -12,88 +12,46 @@ public class FarkleModel {
     private int[] dice = new int[NUM_DICE];
     private int currentPlayer = 0;
     private Random random = new Random();
-    private int rollsRemaining = 2;
+    private int rollsRemaining = 3;
+    private boolean[] heldDice = new boolean[NUM_DICE];
 
     /**
      * Rolls all 6 dice randomly.
      */
     public void rollDice() {
         for (int i = 0; i < NUM_DICE; i++) {
-            dice[i] = random.nextInt(6) + 1;
-        }
-        System.out.println("\nRolled dice: " + Arrays.toString(dice));
-    }
-
-    /**
-     * Re-rolls only the dice that are not kept.
-     * 
-     * @param keptDice indices (1-based) of kept dice
-     */
-    public void reRollDice(String keptDice) {
-        boolean[] keep = new boolean[NUM_DICE];
-        String[] tokens = keptDice.split(",");
-        for (String token : tokens) {
-            try {
-                int idx = Integer.parseInt(token.trim()) - 1;
-                if (idx >= 0 && idx < NUM_DICE) {
-                    keep[idx] = true;
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid index: " + token);
-            }
-        }
-
-        for (int i = 0; i < NUM_DICE; i++) {
-            if (!keep[i]) {
+            if (!heldDice[i]) {
                 dice[i] = random.nextInt(6) + 1;
             }
         }
-        System.out.println("Re-rolled dice: " + Arrays.toString(dice));
-    }
-
-    /**
-     * Calculates the score for the selected dice values.
-     *
-     * @param input String of comma-separated indices (1-based)
-     */
-    public void scoreDice(String input) {
-        String[] tokens = input.split(",");
-        List<Integer> selectedDice = new ArrayList<>();
-        for (String token : tokens) {
-            try {
-                int idx = Integer.parseInt(token.trim()) - 1;
-                if (idx >= 0 && idx < NUM_DICE) {
-                    selectedDice.add(dice[idx]);
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input: " + token);
-            }
-        }
-
-        int points = calculateScore(selectedDice);
-        if (points > 0) {
-            currentScore += points;
-            System.out.println("Scored: " + points + " points this round. Total this turn: " + currentScore);
-        } else {
-            System.out.println("No valid scoring combination selected.");
-        }
+        rollsRemaining--;
     }
 
     /**
      * Checks if the current roll is a Farkle (no scoring dice).
      */
-    private boolean isFarkle() {
-        List<Integer> rollList = new ArrayList<>();
-        for (int die : dice) {
-            rollList.add(die);
-        }
-        return calculateScore(rollList) == 0;
+    public boolean isFarkle() {
+        // int[] counts = new int[7]; // Index 1-6
+        // for (int die : dice) {
+        // counts[die]++;
+        // }
+
+        // // Check if there are no scoring dice
+        // boolean hasScoringDice = false;
+        // for (int i = 1; i <= 6; i++) {
+        // if (counts[i] >= 3 || (i == 1 && counts[i] > 0) || (i == 5 && counts[i] > 0))
+        // {
+        // hasScoringDice = true;
+        // break;
+        // }
+        // }
+        return false; // Placeholder, implement logic to check for Farkle
     }
 
     /**
      * Calculates score for a list of dice values.
      */
-    private int calculateScore(List<Integer> diceList) {
+    public int calculateScore(List<Integer> diceList) {
         int[] counts = new int[7]; // Index 1-6
         for (int die : diceList) {
             counts[die]++;
@@ -162,17 +120,18 @@ public class FarkleModel {
         return score;
     }
 
+    public boolean canBankPoints() {
+        if (playerScores[currentPlayer] == 0 && currentScore < 500) {
+            return false; // Player needs at least 500 points to bank
+        }
+        return true; // Player can bank points if they have a score
+    }
+
     /**
      * Banks the current score if valid.
      */
     public void bankPoints() {
-        if (playerScores[currentPlayer] == 0 && currentScore < 500) {
-            System.out.println("You need at least 500 points to get on the board.");
-        } else {
-            playerScores[currentPlayer] += currentScore;
-            System.out.println("Banked " + currentScore + " points.");
-            currentScore = 0;
-        }
+        playerScores[currentPlayer] += currentScore;
     }
 
     /**
@@ -180,20 +139,8 @@ public class FarkleModel {
      */
     public void endTurn() {
         currentScore = 0;
-        rollsRemaining = 2;
+        rollsRemaining = 3;
         currentPlayer = (currentPlayer + 1) % 2;
-    }
-
-    public void startTurn() {
-        currentScore = 0;
-        rollsRemaining = 2;
-        System.out.println("Player " + (currentPlayer + 1) + "'s turn.");
-        rollDice();
-
-        if (isFarkle()) {
-            System.out.println("Farkle! No points this turn.");
-            endTurn();
-        }
     }
 
     // Getter methods for controller/view
@@ -225,11 +172,13 @@ public class FarkleModel {
         return rollsRemaining;
     }
 
-    public void decrementRolls() {
-        if (rollsRemaining > 0) rollsRemaining--;
+    public void setHeldDice(boolean[] selected) {
+        for (int i = 0; i < NUM_DICE; i++) {
+            heldDice[i] = selected[i];
+        }
     }
 
-    public void resetRolls() {
-        rollsRemaining = 2;
+    public void setCurrentScore(int score) {
+        currentScore = score;
     }
 }
