@@ -8,6 +8,7 @@ public class FarkleView extends JFrame {
     private JButton rollButton;
     private JButton bankPointsButton;
     private JButton endTurnButton;
+    private JButton scoreSheetButton;
     private JLabel[] diceLabels;
     private JPanel dicePanel;
     private JLabel currentScoreLabel;
@@ -32,6 +33,12 @@ public class FarkleView extends JFrame {
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+
+        JPanel scoreSheetPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        scoreSheetButton = new JButton("Score Sheet");
+        scoreSheetButton.setPreferredSize(new Dimension(100, 30));
+        scoreSheetPanel.add(scoreSheetButton);
+        mainPanel.add(scoreSheetPanel);
 
         turnLabel = new JLabel("Player 1's Turn", SwingConstants.CENTER);
         turnLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -94,6 +101,10 @@ public class FarkleView extends JFrame {
 
         this.add(mainPanel, BorderLayout.CENTER);
         this.setVisible(true);
+    }
+
+    public JButton getScoreSheetButton() {
+        return scoreSheetButton;
     }
 
     public JButton getRollButton() {

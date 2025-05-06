@@ -90,6 +90,25 @@ public class FarkleController {
             }
         });
 
+        view.getScoreSheetButton().addActionListener(new ActionListener() {
+            // Show a pop up with the scoring rules
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String rules = "SCORING:\n" +
+                        "- 1s = 100 points each.\n" +
+                        "- 5s = 50 points each.\n" +
+                        "- Three of a kind = 100 times the number (e.g., three 2s = 200 points).\n" +
+                        "- Four of a kind = 1000.\n" +
+                        "- Five of a kind = 2000.\n" +
+                        "- Six of a kind = 3000.\n" +
+                        "- 1-6 straight = 1500.\n" +
+                        "- Three pairs = 1500.\n" +
+                        "- Two triplets = 2500.\n" +
+                        "- Four of a kind + pair = 1500.";
+                JOptionPane.showMessageDialog(view, rules, "Scoring Rules", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
         view.getEndTurnButton().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
