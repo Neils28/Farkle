@@ -173,8 +173,8 @@ public class FarkleView extends JFrame {
         }
     }
 
-    public void resetCurrenScore(int score) {
-        currentScoreLabel.setText("Current Turn Score: " + score);
+    public void resetCurrenScore() {
+        currentScoreLabel.setText("Current Turn Score: " + 0);
     }
 
 }

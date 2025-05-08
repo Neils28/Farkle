@@ -35,11 +35,12 @@ public class FarkleModel {
     }
 
     public boolean isFarkle() {
-        List<Integer> diceList = new ArrayList<>();
-        for (int die : dice) {
-            diceList.add(die);
-        }
-        return calculateScore(diceList) == 0;
+        // List<Integer> diceList = new ArrayList<>();
+        // for (int die : dice) {
+        // diceList.add(die);
+        // }
+        // return calculateScore(diceList) == 0;
+        return false; // Placeholder for Farkle logic
     }
 
     public int calculateScore(List<Integer> diceList) {
@@ -52,7 +53,8 @@ public class FarkleModel {
 
         // Six of a kind
         for (int i = 1; i <= 6; i++) {
-            if (counts[i] == 6) return 3000;
+            if (counts[i] == 6)
+                return 3000;
         }
 
         // Five of a kind
@@ -78,7 +80,8 @@ public class FarkleModel {
                 pairCount++;
             }
         }
-        if (pairCount == 3) return 1500;
+        if (pairCount == 3)
+            return 1500;
 
         // Straight (1-6)
         boolean isStraight = true;
@@ -88,7 +91,8 @@ public class FarkleModel {
                 break;
             }
         }
-        if (isStraight) return 1500;
+        if (isStraight)
+            return 1500;
 
         // Three of a kind
         for (int i = 1; i <= 6; i++) {
@@ -103,10 +107,6 @@ public class FarkleModel {
         score += counts[5] * 50;
 
         return score;
-    }
-
-    public boolean canBankPoints() {
-        return !(playerScores[currentPlayer] == 0 && currentScore < 500);
     }
 
     public void bankPoints() {
@@ -157,4 +157,3 @@ public class FarkleModel {
         this.currentScore = score;
     }
 }
-

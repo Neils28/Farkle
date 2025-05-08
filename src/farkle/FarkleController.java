@@ -21,7 +21,7 @@ public class FarkleController {
             final int index = i;
             buttons[i].addActionListener(e -> {
                 // Toggle the selection of the radio button
-                updateSelectedScore();
+                updateKeptDiceScore();
             });
 
         }
@@ -66,27 +66,43 @@ public class FarkleController {
         view.getBankPointsButton().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Prevent banking if player has not reached 500 points to get on the board
-                if (!model.canBankPoints()) {
+                // check if the player has scored at least 500 points
+                if (model.getCurrentScore() < 500 && model.getPlayerScore(model.getCurrentPlayer()) == 0) {
                     javax.swing.JOptionPane.showMessageDialog(
                             null,
-                            "You need at least 500 points to get on the board!",
-                            "Not Enough Points",
+                            "You must score at least 500 points to bank.",
+                            "Bank Points",
                             javax.swing.JOptionPane.WARNING_MESSAGE);
                     return;
                 } else {
-                    // Bank points and update the score display
                     model.bankPoints();
+
+                    view.updateScoreDisplay(model.getPlayerScore(model.getCurrentPlayer()),
+                            model.getCurrentPlayer());
                     model.endTurn();
-                    view.enableRollButton();
-                    view.updateScoreDisplay(model.getPlayerScore(model.getCurrentPlayer()), model.getCurrentPlayer());
                     view.updateTurnLabel(model.getCurrentPlayer());
                     view.updateRollsLeft(model.getRollsRemaining());
                     view.resetDiceDisplay();
                     view.resetRadioButtons();
-                    view.resetCurrenScore(model.getCurrentScore());
+                    view.resetCurrenScore();
+                    view.enableRollButton();
+
                 }
 
+            }
+        });
+
+        view.getEndTurnButton().addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // End the turn and update the display
+                model.endTurn();
+                view.updateTurnLabel(model.getCurrentPlayer());
+                view.updateRollsLeft(model.getRollsRemaining());
+                view.resetDiceDisplay();
+                view.resetRadioButtons();
+                view.resetCurrenScore();
+                view.enableRollButton();
             }
         });
 
@@ -109,23 +125,9 @@ public class FarkleController {
             }
         });
 
-        view.getEndTurnButton().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // End the current player's turn
-                model.endTurn();
-                view.enableRollButton();
-                view.updateRollsLeft(model.getRollsRemaining());
-                view.updateTurnLabel(model.getCurrentPlayer());
-                view.resetDiceDisplay();
-                view.resetRadioButtons();
-                view.resetCurrenScore(model.getCurrentScore());
-            }
-        });
-
     }
 
-    private void updateSelectedScore() {
+    private void updateKeptDiceScore() {
         JRadioButton[] buttons = view.getDiceButtons();
         int[] dice = model.getDice();
         List<Integer> selectedDice = new ArrayList<>();
