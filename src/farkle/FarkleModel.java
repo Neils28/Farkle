@@ -7,17 +7,24 @@ public class FarkleModel {
     private static final int NUM_DICE = 6;
     private static final int WINNING_SCORE = 10000;
 
-    private int[] playerScores = new int[2];
-    private int currentScore = 0;
-    private int[] dice = new int[NUM_DICE];
-    private int currentPlayer = 0;
-    private Random random = new Random();
-    private int rollsRemaining = 3;
-    private boolean[] heldDice = new boolean[NUM_DICE];
+    private int[] playerScores;
+    private int currentScore;
+    private int[] dice;
+    private int currentPlayer;
+    private Random random;
+    private int rollsRemaining;
+    private boolean[] heldDice;
 
-    /**
-     * Rolls all 6 dice randomly.
-     */
+    public FarkleModel() {
+        this.playerScores = new int[2];
+        this.currentScore = 0;
+        this.dice = new int[NUM_DICE];
+        this.currentPlayer = 0;
+        this.random = new Random();
+        this.rollsRemaining = 3;
+        this.heldDice = new boolean[NUM_DICE];
+    }
+
     public void rollDice() {
         for (int i = 0; i < NUM_DICE; i++) {
             if (!heldDice[i]) {
@@ -27,30 +34,14 @@ public class FarkleModel {
         rollsRemaining--;
     }
 
-    /**
-     * Checks if the current roll is a Farkle (no scoring dice).
-     */
     public boolean isFarkle() {
-        // int[] counts = new int[7]; // Index 1-6
-        // for (int die : dice) {
-        // counts[die]++;
-        // }
-
-        // // Check if there are no scoring dice
-        // boolean hasScoringDice = false;
-        // for (int i = 1; i <= 6; i++) {
-        // if (counts[i] >= 3 || (i == 1 && counts[i] > 0) || (i == 5 && counts[i] > 0))
-        // {
-        // hasScoringDice = true;
-        // break;
-        // }
-        // }
-        return false; // Placeholder, implement logic to check for Farkle
+        List<Integer> diceList = new ArrayList<>();
+        for (int die : dice) {
+            diceList.add(die);
+        }
+        return calculateScore(diceList) == 0;
     }
 
-    /**
-     * Calculates score for a list of dice values.
-     */
     public int calculateScore(List<Integer> diceList) {
         int[] counts = new int[7]; // Index 1-6
         for (int die : diceList) {
@@ -61,16 +52,14 @@ public class FarkleModel {
 
         // Six of a kind
         for (int i = 1; i <= 6; i++) {
-            if (counts[i] == 6) {
-                return 3000;
-            }
+            if (counts[i] == 6) return 3000;
         }
 
         // Five of a kind
         for (int i = 1; i <= 6; i++) {
             if (counts[i] == 5) {
                 score += 2000;
-                counts[i] = 0;
+                counts[i] -= 5;
             }
         }
 
@@ -78,7 +67,7 @@ public class FarkleModel {
         for (int i = 1; i <= 6; i++) {
             if (counts[i] == 4) {
                 score += 1000;
-                counts[i] = 0;
+                counts[i] -= 4;
             }
         }
 
@@ -89,9 +78,7 @@ public class FarkleModel {
                 pairCount++;
             }
         }
-        if (pairCount == 3) {
-            return 1500;
-        }
+        if (pairCount == 3) return 1500;
 
         // Straight (1-6)
         boolean isStraight = true;
@@ -101,9 +88,7 @@ public class FarkleModel {
                 break;
             }
         }
-        if (isStraight) {
-            return 1500;
-        }
+        if (isStraight) return 1500;
 
         // Three of a kind
         for (int i = 1; i <= 6; i++) {
@@ -113,7 +98,7 @@ public class FarkleModel {
             }
         }
 
-        // Ones and fives (outside sets)
+        // Remaining ones and fives
         score += counts[1] * 100;
         score += counts[5] * 50;
 
@@ -121,29 +106,21 @@ public class FarkleModel {
     }
 
     public boolean canBankPoints() {
-        if (playerScores[currentPlayer] == 0 && currentScore < 500) {
-            return false; // Player needs at least 500 points to bank
-        }
-        return true; // Player can bank points if they have a score
+        return !(playerScores[currentPlayer] == 0 && currentScore < 500);
     }
 
-    /**
-     * Banks the current score if valid.
-     */
     public void bankPoints() {
         playerScores[currentPlayer] += currentScore;
     }
 
-    /**
-     * Ends the current player's turn.
-     */
     public void endTurn() {
         currentScore = 0;
         rollsRemaining = 3;
+        Arrays.fill(heldDice, false);
         currentPlayer = (currentPlayer + 1) % 2;
     }
 
-    // Getter methods for controller/view
+    // Getters
     public int[] getDice() {
         return dice;
     }
@@ -173,12 +150,11 @@ public class FarkleModel {
     }
 
     public void setHeldDice(boolean[] selected) {
-        for (int i = 0; i < NUM_DICE; i++) {
-            heldDice[i] = selected[i];
-        }
+        this.heldDice = Arrays.copyOf(selected, NUM_DICE);
     }
 
     public void setCurrentScore(int score) {
-        currentScore = score;
+        this.currentScore = score;
     }
 }
+
