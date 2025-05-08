@@ -51,6 +51,51 @@ public class FarkleModel {
 
         int score = 0;
 
+        // Straight (1-6)
+        boolean isStraight = true;
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] != 1) {
+                isStraight = false;
+                break;
+            }
+        }
+        if (isStraight) {
+            return 1500;
+        }
+
+        // Three pairs
+        int pairCount = 0;
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 2) {
+                pairCount++;
+            }
+        }
+        if (pairCount == 3) {
+            return 1500;
+        }
+
+        // Two triplets
+        int tripletCount = 0;
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 3) {
+                tripletCount++;
+            }
+        }
+        if (tripletCount == 2) {
+            return 2500;
+        }
+
+        // Four of a kind + a pair
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 4) {
+                for (int j = 1; j <= 6; j++) {
+                    if (i != j && counts[j] == 2) {
+                        return 1500;
+                    }
+                }
+            }
+        }
+
         // Six of a kind
         for (int i = 1; i <= 6; i++) {
             if (counts[i] == 6)
@@ -72,27 +117,6 @@ public class FarkleModel {
                 counts[i] -= 4;
             }
         }
-
-        // Three pairs
-        int pairCount = 0;
-        for (int i = 1; i <= 6; i++) {
-            if (counts[i] == 2) {
-                pairCount++;
-            }
-        }
-        if (pairCount == 3)
-            return 1500;
-
-        // Straight (1-6)
-        boolean isStraight = true;
-        for (int i = 1; i <= 6; i++) {
-            if (counts[i] != 1) {
-                isStraight = false;
-                break;
-            }
-        }
-        if (isStraight)
-            return 1500;
 
         // Three of a kind
         for (int i = 1; i <= 6; i++) {

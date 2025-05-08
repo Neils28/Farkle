@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 public class FarkleController {
 
@@ -30,36 +31,36 @@ public class FarkleController {
         view.getRollButton().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Check if the player has rolls remaining
-                // If not, disable the roll button
-                if ((model.getRollsRemaining() - 1) <= 0) {
-                    view.disableRollButton();
-                    model.rollDice();
-                    view.updateDiceDisplay(model.getDice());
-                    view.updateRollsLeft(model.getRollsRemaining());
-                    return;
-                }
-                if (model.isFarkle()) {
-                    javax.swing.JOptionPane.showMessageDialog(
-                            null,
-                            "Farkle! You lose all points for this turn.",
-                            "Farkle",
-                            javax.swing.JOptionPane.WARNING_MESSAGE);
-                    model.endTurn();
-                    view.updateRollsLeft(model.getRollsRemaining());
-                    view.updateTurnLabel(model.getCurrentPlayer());
-                }
 
-                // Roll the dice and update the display
                 JRadioButton[] buttons = view.getDiceButtons();
                 boolean[] selected = new boolean[6];
                 for (int i = 0; i < buttons.length; i++) {
                     selected[i] = buttons[i].isSelected();
                 }
+
+                System.out.println("Selected holds: " + Arrays.toString(selected));
+                System.out.println("Dice before roll: " + Arrays.toString(model.getDice()));
+
                 model.setHeldDice(selected);
                 model.rollDice();
                 view.updateDiceDisplay(model.getDice());
                 view.updateRollsLeft(model.getRollsRemaining());
+                updateKeptDiceScore();
+
+                if (model.isFarkle()) {
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Farkle! You lose all points for this turn.",
+                            "Farkle",
+                            JOptionPane.WARNING_MESSAGE);
+                    model.endTurn();
+                    view.updateRollsLeft(model.getRollsRemaining());
+                    view.updateTurnLabel(model.getCurrentPlayer());
+                }
+
+                if (model.getRollsRemaining() <= 0) {
+                    view.disableRollButton();
+                }
             }
         });
 
@@ -111,16 +112,16 @@ public class FarkleController {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String rules = "SCORING:\n" +
+                        "- 1-6 straight = 1500 points.\n" +
+                        "- Three pairs = 1500 points.\n" +
+                        "- Two triplets = 2500 points.\n" +
+                        "- Four of a kind + a pair = 1500 points.\n" +
+                        "- Six of a kind = 3000 points.\n" +
+                        "- Five of a kind = 2000 points.\n" +
+                        "- Four of a kind = 1000 points.\n" +
+                        "- Three of a kind = 100 times the number (e.g., three 2s = 200 points; three 1s = 1000).\n" +
                         "- 1s = 100 points each.\n" +
-                        "- 5s = 50 points each.\n" +
-                        "- Three of a kind = 100 times the number (e.g., three 2s = 200 points).\n" +
-                        "- Four of a kind = 1000.\n" +
-                        "- Five of a kind = 2000.\n" +
-                        "- Six of a kind = 3000.\n" +
-                        "- 1-6 straight = 1500.\n" +
-                        "- Three pairs = 1500.\n" +
-                        "- Two triplets = 2500.\n" +
-                        "- Four of a kind + pair = 1500.";
+                        "- 5s = 50 points each.";
                 JOptionPane.showMessageDialog(view, rules, "Scoring Rules", JOptionPane.INFORMATION_MESSAGE);
             }
         });
