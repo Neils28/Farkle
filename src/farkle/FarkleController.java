@@ -21,7 +21,11 @@ public class FarkleController {
         for (int i = 0; i < buttons.length; i++) {
             final int index = i;
             buttons[i].addActionListener(e -> {
-                // Toggle the selection of the radio button
+                boolean[] selected = new boolean[6];
+                for (int j = 0; j < buttons.length; j++) {
+                    selected[j] = buttons[j].isSelected();
+                }
+                model.setHeldDice(selected);
                 updateKeptDiceScore();
             });
 
@@ -32,16 +36,16 @@ public class FarkleController {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                JRadioButton[] buttons = view.getDiceButtons();
-                boolean[] selected = new boolean[6];
-                for (int i = 0; i < buttons.length; i++) {
-                    selected[i] = buttons[i].isSelected();
+                // Check if held dice are scoring dice before rolling
+                if (!model.isHoldingScoringDice() && model.getRollsRemaining() < 3) {
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "You must set aside at least one scoring die before rolling.\nOnly valid combinations may be held",
+                            "Invalid Roll",
+                            JOptionPane.WARNING_MESSAGE);
+                    return;
                 }
 
-                System.out.println("Selected holds: " + Arrays.toString(selected));
-                System.out.println("Dice before roll: " + Arrays.toString(model.getDice()));
-
-                model.setHeldDice(selected);
                 model.rollDice();
                 view.updateDiceDisplay(model.getDice());
                 view.updateRollsLeft(model.getRollsRemaining());
@@ -56,6 +60,9 @@ public class FarkleController {
                     model.endTurn();
                     view.updateRollsLeft(model.getRollsRemaining());
                     view.updateTurnLabel(model.getCurrentPlayer());
+                    view.resetDiceDisplay();
+                    view.resetRadioButtons();
+                    view.resetCurrenScore();
                 }
 
                 if (model.getRollsRemaining() <= 0) {
@@ -68,6 +75,20 @@ public class FarkleController {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // check if the player has scored at least 500 points
+
+                if (model.allDiceHeld() && model.isHotDice()) {
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Hot dice! All dice scored, so you get to roll all 6 again!",
+                            "Hot Dice!",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    System.out.println("Hot dice! All dice scored, so you get to roll all 6 again!");
+                    model.resetHotDice();
+                    view.resetRadioButtons();
+                    view.updateRollsLeft(model.getRollsRemaining());
+                    return;
+                }
+
                 if (model.getCurrentScore() < 500 && model.getPlayerScore(model.getCurrentPlayer()) == 0) {
                     javax.swing.JOptionPane.showMessageDialog(
                             null,
@@ -137,6 +158,7 @@ public class FarkleController {
                 selectedDice.add(dice[i]);
             }
         }
+
         int score = model.calculateScore(selectedDice);
         model.setCurrentScore(score);
         view.updateCurrentScore(score);

@@ -26,6 +26,7 @@ public class FarkleModel {
     }
 
     public void rollDice() {
+
         for (int i = 0; i < NUM_DICE; i++) {
             if (!heldDice[i]) {
                 dice[i] = random.nextInt(6) + 1;
@@ -35,12 +36,13 @@ public class FarkleModel {
     }
 
     public boolean isFarkle() {
-        // List<Integer> diceList = new ArrayList<>();
-        // for (int die : dice) {
-        // diceList.add(die);
-        // }
-        // return calculateScore(diceList) == 0;
-        return false; // Placeholder for Farkle logic
+        List<Integer> rolledDice = new ArrayList<>();
+        for (int i = 0; i < NUM_DICE; i++) {
+            if (!heldDice[i]) {
+                rolledDice.add(dice[i]);
+            }
+        }
+        return calculateScore(rolledDice) == 0;
     }
 
     public int calculateScore(List<Integer> diceList) {
@@ -179,5 +181,71 @@ public class FarkleModel {
 
     public void setCurrentScore(int score) {
         this.currentScore = score;
+    }
+
+    public boolean isHoldingScoringDice() {
+        List<Integer> heldValues = new ArrayList<>();
+        for (int i = 0; i < NUM_DICE; i++) {
+            if (heldDice[i]) {
+                heldValues.add(dice[i]);
+            }
+        }
+
+        if (heldValues.isEmpty())
+            return false;
+
+        int totalScore = calculateScore(heldValues);
+
+        for (int i = 0; i < heldValues.size(); i++) {
+            List<Integer> copy = new ArrayList<>(heldValues);
+            copy.remove(i);
+            if (calculateScore(copy) == totalScore) {
+                return false; // this die contributed nothing
+            }
+        }
+
+        return true;
+    }
+
+    public boolean allDiceHeld() {
+        for (boolean held : heldDice) {
+            if (!held)
+                return false;
+        }
+        return true;
+    }
+
+    public void resetHotDice() {
+        Arrays.fill(heldDice, false);
+        rollsRemaining = 3;
+    }
+
+    public boolean isHotDice() {
+        List<Integer> heldValues = new ArrayList<>();
+        int heldCount = 0;
+        for (int i = 0; i < NUM_DICE; i++) {
+            if (heldDice[i]) {
+                heldValues.add(dice[i]);
+                heldCount++;
+            }
+        }
+        if (heldCount != NUM_DICE)
+            return false;
+
+        // Re-score using calculateScore, but compare to the score of individual dice
+        int totalScore = calculateScore(heldValues);
+
+        // Simulate unscoring each die: if removing any one reduces the score, it's
+        // contributing
+        for (int i = 0; i < heldValues.size(); i++) {
+            List<Integer> copy = new ArrayList<>(heldValues);
+            copy.remove(i);
+            if (calculateScore(copy) == totalScore) {
+                // This die didn't contribute to the score
+                return false;
+            }
+        }
+
+        return true;
     }
 }
