@@ -267,4 +267,8 @@ public class FarkleModel {
     public void setBaseScoreForHotDice(int score) {
         this.baseScoreForHotDice = score;
     }
+
+    public int getWinningScore() {
+        return WINNING_SCORE;
+    }
 }

@@ -65,8 +65,16 @@ public class FarkleController {
         view.getBankPointsButton().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // Check for win
+                if (model.getPlayerScore(model.getCurrentPlayer()) >= model.getWinningScore()) {
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Player " + (model.getCurrentPlayer() + 1) + " wins!",
+                            "Game Over",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    System.exit(0);
+                }
                 // check if the player has scored at least 500 points
-
                 if (model.allDiceHeld() && model.isHotDice()) {
                     JOptionPane.showMessageDialog(
                             null,
