@@ -16,6 +16,7 @@ public class FarkleView extends JFrame {
     private JLabel player2ScoreLabel;
     private JLabel turnsLeft;
     private JLabel turnLabel;
+    private JLabel farkleLabel;
     private JRadioButton[] diceButtons = new JRadioButton[6];
 
     public FarkleView() {
@@ -74,6 +75,10 @@ public class FarkleView extends JFrame {
             checkBoxPanel.add(radioPanel);
         }
         mainPanel.add(checkBoxPanel);
+
+        farkleLabel = new JLabel("", SwingConstants.CENTER);
+        farkleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(farkleLabel);
 
         currentScoreLabel = new JLabel("Current Turn Score: 0", SwingConstants.CENTER);
         currentScoreLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -175,6 +180,24 @@ public class FarkleView extends JFrame {
 
     public void resetCurrenScore() {
         currentScoreLabel.setText("Current Turn Score: " + 0);
+    }
+
+    public void updateFarkleLabel() {
+        farkleLabel.setText("Farkle! You lose all your points and your turn!");
+        farkleLabel.setForeground(Color.RED);
+    }
+
+    public void disableBankPointsButton() {
+        bankPointsButton.setEnabled(false);
+    }
+
+    public void resetFarkleLable() {
+        farkleLabel.setText("");
+
+    }
+
+    public void enableBankPointsButton() {
+        bankPointsButton.setEnabled(true);
     }
 
 }

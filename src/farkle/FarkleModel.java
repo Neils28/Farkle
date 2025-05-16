@@ -14,6 +14,8 @@ public class FarkleModel {
     private Random random;
     private int rollsRemaining;
     private boolean[] heldDice;
+    private boolean isAnotherTurn = false;
+    private int baseScoreForHotDice = 0;
 
     public FarkleModel() {
         this.playerScores = new int[2];
@@ -144,6 +146,7 @@ public class FarkleModel {
         rollsRemaining = 3;
         Arrays.fill(heldDice, false);
         currentPlayer = (currentPlayer + 1) % 2;
+        baseScoreForHotDice = 0;
     }
 
     // Getters
@@ -247,5 +250,21 @@ public class FarkleModel {
         }
 
         return true;
+    }
+
+    public boolean isAnotherTurn() {
+        return isAnotherTurn;
+    }
+
+    public void setIsAnotherTurn(boolean anotherTurn) {
+        isAnotherTurn = anotherTurn;
+    }
+
+    public int getBaseScoreForHotDice() {
+        return baseScoreForHotDice;
+    }
+
+    public void setBaseScoreForHotDice(int score) {
+        this.baseScoreForHotDice = score;
     }
 }

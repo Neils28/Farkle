@@ -49,20 +49,11 @@ public class FarkleController {
                 model.rollDice();
                 view.updateDiceDisplay(model.getDice());
                 view.updateRollsLeft(model.getRollsRemaining());
-                updateKeptDiceScore();
 
                 if (model.isFarkle()) {
-                    JOptionPane.showMessageDialog(
-                            null,
-                            "Farkle! You lose all points for this turn.",
-                            "Farkle",
-                            JOptionPane.WARNING_MESSAGE);
-                    model.endTurn();
-                    view.updateRollsLeft(model.getRollsRemaining());
-                    view.updateTurnLabel(model.getCurrentPlayer());
-                    view.resetDiceDisplay();
-                    view.resetRadioButtons();
-                    view.resetCurrenScore();
+                    view.updateFarkleLabel();
+                    view.disableRollButton();
+                    view.disableBankPointsButton();
                 }
 
                 if (model.getRollsRemaining() <= 0) {
@@ -82,8 +73,9 @@ public class FarkleController {
                             "Hot dice! All dice scored, so you get to roll all 6 again!",
                             "Hot Dice!",
                             JOptionPane.INFORMATION_MESSAGE);
-                    System.out.println("Hot dice! All dice scored, so you get to roll all 6 again!");
+                    model.setIsAnotherTurn(true);
                     model.resetHotDice();
+                    view.resetDiceDisplay();
                     view.resetRadioButtons();
                     view.updateRollsLeft(model.getRollsRemaining());
                     return;
@@ -96,25 +88,24 @@ public class FarkleController {
                             "Bank Points",
                             javax.swing.JOptionPane.WARNING_MESSAGE);
                     return;
-                } else {
-                    model.bankPoints();
-
-                    view.updateScoreDisplay(model.getPlayerScore(model.getCurrentPlayer()),
-                            model.getCurrentPlayer());
-                    model.endTurn();
-                    view.updateTurnLabel(model.getCurrentPlayer());
-                    view.updateRollsLeft(model.getRollsRemaining());
-                    view.resetDiceDisplay();
-                    view.resetRadioButtons();
-                    view.resetCurrenScore();
-                    view.enableRollButton();
-
                 }
+
+                model.bankPoints();
+                view.updateScoreDisplay(model.getPlayerScore(model.getCurrentPlayer()),
+                        model.getCurrentPlayer());
+                model.endTurn();
+                view.updateTurnLabel(model.getCurrentPlayer());
+                view.updateRollsLeft(model.getRollsRemaining());
+                view.resetDiceDisplay();
+                view.resetRadioButtons();
+                view.resetCurrenScore();
+                view.enableRollButton();
 
             }
         });
 
         view.getEndTurnButton().addActionListener(new ActionListener() {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 // End the turn and update the display
@@ -125,6 +116,8 @@ public class FarkleController {
                 view.resetRadioButtons();
                 view.resetCurrenScore();
                 view.enableRollButton();
+                view.resetFarkleLable();
+                view.enableBankPointsButton();
             }
         });
 
@@ -159,9 +152,17 @@ public class FarkleController {
             }
         }
 
-        int score = model.calculateScore(selectedDice);
-        model.setCurrentScore(score);
-        view.updateCurrentScore(score);
+        int selectedScore = model.calculateScore(selectedDice);
+
+        if (model.isAnotherTurn()) {
+            int combinedScore = model.getBaseScoreForHotDice() + selectedScore;
+            model.setCurrentScore(combinedScore);
+        } else {
+            model.setCurrentScore(selectedScore);
+            model.setBaseScoreForHotDice(selectedScore);
+        }
+
+        view.updateCurrentScore(model.getCurrentScore());
     }
 
 }
