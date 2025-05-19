@@ -271,4 +271,8 @@ public class FarkleModel {
     public int getWinningScore() {
         return WINNING_SCORE;
     }
+
+    public boolean[] getHeldDice() {
+        return heldDice;
+    }
 }

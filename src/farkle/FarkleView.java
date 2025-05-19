@@ -193,11 +193,15 @@ public class FarkleView extends JFrame {
 
     public void resetFarkleLable() {
         farkleLabel.setText("");
-
     }
 
     public void enableBankPointsButton() {
         bankPointsButton.setEnabled(true);
     }
 
+    public void highlightHeldDice(boolean[] held) {
+        for (int i = 0; i < held.length; i++) {
+            diceButtons[i].setSelected(held[i]);
+        }
+    }
 }

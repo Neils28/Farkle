@@ -17,7 +17,7 @@ public class FarkleController {
     public FarkleController(FarkleModel model, FarkleView view) {
         this.model = model;
         this.view = view;
-        this.ai = new FarkleAI(model);
+        this.ai = new FarkleAI(model, view);
 
         JRadioButton[] buttons = view.getDiceButtons();
         for (int i = 0; i < buttons.length; i++) {
@@ -112,7 +112,7 @@ public class FarkleController {
                 view.enableRollButton();
 
                 if (model.getCurrentPlayer() == 1) {
-                    ai.playAITurn();
+                    new Thread(() -> ai.takeTurn()).start();
                 }
             }
         });
@@ -133,7 +133,7 @@ public class FarkleController {
                 view.enableBankPointsButton();
 
                 if (model.getCurrentPlayer() == 1) {
-                    ai.playAITurn();
+                    new Thread(() -> ai.takeTurn()).start();
                 }
             }
         });

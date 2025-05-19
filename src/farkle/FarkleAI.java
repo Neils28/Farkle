@@ -5,9 +5,11 @@ import java.util.*;
 public class FarkleAI {
 
     private FarkleModel model;
+    private FarkleView view;
 
-    public FarkleAI(FarkleModel model) {
+    public FarkleAI(FarkleModel model, FarkleView view) {
         this.model = model;
+        this.view = view;
     }
 
     // Main method AI should call when it's its turn (Player 2)
@@ -16,19 +18,41 @@ public class FarkleAI {
             return; // Not AI's turn
         }
 
-        boolean continueRolling = true;
-        while (continueRolling) {
-            model.rollDice();
-            int[] dice = model.getDice();
-            List<Integer> rolledDice = new ArrayList<>();
+        while (model.getRollsRemaining() > 0 && !model.isGameOver()) {
 
-            for (int i = 0; i < dice.length; i++) {
-                rolledDice.add(dice[i]);
+            if (model.getCurrentScore() >= model.getWinningScore()) {
+                System.out.println("AI has reached the winning score! Ending turn.");
+                view.updateTurnLabel((model.getCurrentPlayer() + 1) % 2);
+                model.endTurn();
+                return;
             }
 
-            // Pick which dice to hold based on score
+            System.out.println("AI is rolling the dice...");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            model.rollDice();
+            System.out.println("AI rolled: " + Arrays.toString(model.getDice()));
+            int[] dice = model.getDice();
+            view.updateDiceDisplay(dice);
+            view.updateRollsLeft(model.getRollsRemaining());
+
+            List<Integer> rolledDice = new ArrayList<>();
+            for (int die : dice) {
+                rolledDice.add(die);
+            }
+
+            System.out.println("AI evaluating scoring dice...");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             boolean[] diceToHold = chooseScoringDice(rolledDice);
             model.setHeldDice(diceToHold);
+            view.highlightHeldDice(diceToHold);
 
             List<Integer> heldDiceList = new ArrayList<>();
             for (int i = 0; i < diceToHold.length; i++) {
@@ -39,30 +63,87 @@ public class FarkleAI {
 
             int turnPoints = model.calculateScore(heldDiceList);
             model.setCurrentScore(model.getCurrentScore() + turnPoints);
+            // Optionally update score display if method exists:
+            // view.updateScoreDisplay(model.getCurrentScore());
 
-            if (turnPoints == 0) {
-                System.out.println("AI Farkled! Ending turn.");
-                break;
+            System.out.println("AI checking for Hot Dice...");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-
-            if (model.allDiceHeld() && model.isHotDice()) {
+            if (model.allDiceHeld() && model.isHotDice() && !heldDiceList.isEmpty() && turnPoints > 0) {
                 System.out.println("AI rolled Hot Dice! Resetting.");
                 model.setIsAnotherTurn(true);
                 model.setBaseScoreForHotDice(model.getCurrentScore());
                 model.resetHotDice();
-                continue; // Roll again with all dice
+                continue;
             }
 
-            // Banking strategy: bank if score is 1000 or more, else keep rolling
-            if (model.getCurrentScore() >= 1000 || model.getRollsRemaining() <= 0) {
+            int remainingDice = getRemainingDiceCount();
+            double expectedValue = calculateExpectedValue(remainingDice);
+
+            System.out.println("AI evaluating whether to bank or roll again...");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (expectedValue <= 0 || model.getRollsRemaining() == 0) {
                 model.bankPoints();
-                System.out.println("AI banks " + model.getCurrentScore() + " points.");
+                System.out.println(
+                        "AI banks " + model.getCurrentScore() + " points (Expected value: " + expectedValue + ")");
+                // Optionally update score display if method exists:
+                // view.updateScoreDisplay(model.getCurrentScore());
+                view.updateTurnLabel((model.getCurrentPlayer() + 1) % 2);
                 model.endTurn();
-                break;
+                return;
+            }
+        }
+    }
+
+    // Helper to estimate expected value of rolling N dice
+    private double calculateExpectedValue(int diceCount) {
+        int[][] allRolls = generateAllRolls(diceCount);
+        double total = 0;
+        int validRolls = 0;
+
+        for (int[] roll : allRolls) {
+            List<Integer> rollList = new ArrayList<>();
+            for (int die : roll)
+                rollList.add(die);
+
+            boolean[] toHold = chooseScoringDice(rollList);
+            List<Integer> heldDice = new ArrayList<>();
+            for (int i = 0; i < toHold.length; i++) {
+                if (toHold[i])
+                    heldDice.add(roll[i]);
             }
 
-            // Otherwise, keep rolling
+            int score = model.calculateScore(heldDice);
+            if (score > 0) {
+                total += score;
+                validRolls++;
+            }
         }
+
+        return validRolls == 0 ? 0 : total / allRolls.length;
+    }
+
+    // Helper to generate all possible rolls of N dice
+    private int[][] generateAllRolls(int diceCount) {
+        int totalCombos = (int) Math.pow(6, diceCount);
+        int[][] rolls = new int[totalCombos][diceCount];
+
+        for (int i = 0; i < totalCombos; i++) {
+            int num = i;
+            for (int j = 0; j < diceCount; j++) {
+                rolls[i][j] = (num % 6) + 1;
+                num /= 6;
+            }
+        }
+
+        return rolls;
     }
 
     // Choose which dice to hold based on score contribution
@@ -83,5 +164,16 @@ public class FarkleAI {
         }
 
         return hold;
+    }
+
+    // Helper to count the number of dice not held
+    private int getRemainingDiceCount() {
+        boolean[] held = model.getHeldDice();
+        int count = 0;
+        for (boolean b : held) {
+            if (!b)
+                count++;
+        }
+        return count;
     }
 }
