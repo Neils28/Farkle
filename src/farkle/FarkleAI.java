@@ -6,6 +6,7 @@ public class FarkleAI {
 
     private FarkleModel model;
     private FarkleView view;
+    private static final int THRESHOLD_SCORE_TO_BANK = 500; // Updated threshold to match human rules
 
     public FarkleAI(FarkleModel model, FarkleView view) {
         this.model = model;
@@ -26,6 +27,7 @@ public class FarkleAI {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
             model.rollDice();
             System.out.println("AI rolled: " + Arrays.toString(model.getDice()));
             int[] dice = model.getDice();
@@ -56,6 +58,7 @@ public class FarkleAI {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
             boolean[] diceToHold = chooseScoringDice(rolledDice);
             model.setHeldDice(diceToHold);
             view.highlightHeldDice(diceToHold);
@@ -78,6 +81,7 @@ public class FarkleAI {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
             if (model.allDiceHeld() && model.isHotDice() && !heldDiceList.isEmpty() && turnPoints > 0) {
                 System.out.println("AI rolled Hot Dice! Resetting.");
                 model.setIsAnotherTurn(true);
@@ -95,9 +99,12 @@ public class FarkleAI {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            if (expectedValue <= 0 || model.getRollsRemaining() == 0) {
-                System.out.println(
-                        "AI banks " + model.getCurrentScore() + " points (Expected value: " + expectedValue + ")");
+
+            // AI only banks if it has at least 500 points and either:
+            //  - expected value is low
+            //  - no rolls left
+            if ((model.getCurrentScore() >= THRESHOLD_SCORE_TO_BANK && (expectedValue <= 150 || model.getRollsRemaining() == 0))) {
+                System.out.println("AI banks " + model.getCurrentScore() + " points (Expected value: " + expectedValue + ")");
                 model.bankPoints();
                 view.updateScoreDisplay(model.getCurrentScore(), model.getCurrentPlayer());
                 model.endTurn();
@@ -105,9 +112,10 @@ public class FarkleAI {
                 view.resetDiceDisplay();
                 view.resetRadioButtons();
                 view.updateTurnLabel(model.getCurrentPlayer());
-
                 return;
             }
+
+            // Else, continue rolling
         }
     }
 
