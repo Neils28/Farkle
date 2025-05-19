@@ -18,14 +18,7 @@ public class FarkleAI {
             return; // Not AI's turn
         }
 
-        while (model.getRollsRemaining() > 0 && !model.isGameOver()) {
-
-            if (model.getCurrentScore() >= model.getWinningScore()) {
-                System.out.println("AI has reached the winning score! Ending turn.");
-                view.updateTurnLabel((model.getCurrentPlayer() + 1) % 2);
-                model.endTurn();
-                return;
-            }
+        while (model.getRollsRemaining() > 0) {
 
             System.out.println("AI is rolling the dice...");
             try {
@@ -38,6 +31,19 @@ public class FarkleAI {
             int[] dice = model.getDice();
             view.updateDiceDisplay(dice);
             view.updateRollsLeft(model.getRollsRemaining());
+
+            // Check for Farkle
+            if (model.isFarkle()) {
+                System.out.println("AI rolled a Farkle! No points this turn.");
+                view.updateFarkleLabel();
+                model.setCurrentScore(0);
+                view.resetCurrenScore();
+                view.resetDiceDisplay();
+                view.resetRadioButtons();
+                model.endTurn();
+                view.updateTurnLabel(model.getCurrentPlayer());
+                return;
+            }
 
             List<Integer> rolledDice = new ArrayList<>();
             for (int die : dice) {
@@ -62,9 +68,9 @@ public class FarkleAI {
             }
 
             int turnPoints = model.calculateScore(heldDiceList);
+            System.out.println("AI is keeping: " + heldDiceList + " for " + turnPoints + " points");
             model.setCurrentScore(model.getCurrentScore() + turnPoints);
-            // Optionally update score display if method exists:
-            // view.updateScoreDisplay(model.getCurrentScore());
+            view.updateCurrentScore(model.getCurrentScore());
 
             System.out.println("AI checking for Hot Dice...");
             try {
@@ -90,13 +96,16 @@ public class FarkleAI {
                 e.printStackTrace();
             }
             if (expectedValue <= 0 || model.getRollsRemaining() == 0) {
-                model.bankPoints();
                 System.out.println(
                         "AI banks " + model.getCurrentScore() + " points (Expected value: " + expectedValue + ")");
-                // Optionally update score display if method exists:
-                // view.updateScoreDisplay(model.getCurrentScore());
-                view.updateTurnLabel((model.getCurrentPlayer() + 1) % 2);
+                model.bankPoints();
+                view.updateScoreDisplay(model.getCurrentScore(), model.getCurrentPlayer());
                 model.endTurn();
+                view.resetCurrenScore();
+                view.resetDiceDisplay();
+                view.resetRadioButtons();
+                view.updateTurnLabel(model.getCurrentPlayer());
+
                 return;
             }
         }
