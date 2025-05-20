@@ -1,23 +1,20 @@
 package farkle;
 
 import java.util.*;
-
 import javax.swing.JOptionPane;
 
 public class FarkleAI {
 
     private FarkleModel model;
     private FarkleView view;
-    private static final int THRESHOLD_SCORE_TO_BANK = 500; // Updated threshold to match human rules
+    private static final int THRESHOLD_SCORE_TO_BANK = 500;
 
     public FarkleAI(FarkleModel model, FarkleView view) {
         this.model = model;
         this.view = view;
     }
 
-    // Main method AI should call when it's its turn (Player 2)
     public void takeTurn() {
-
         int rolls = 0;
 
         while (rolls < 3) {
@@ -33,7 +30,6 @@ public class FarkleAI {
             view.updateRollsLeft(model.getRollsRemaining());
 
             if (model.isFarkle()) {
-                // show popup message
                 JOptionPane.showMessageDialog(view, "AI rolled a Farkle! No points this turn.", "Farkle",
                         JOptionPane.INFORMATION_MESSAGE);
                 model.setCurrentScore(0);
@@ -89,10 +85,14 @@ public class FarkleAI {
             }
 
             int remainingDice = getRemainingDiceCount();
-            double expectedValue = calculateExpectedValue(remainingDice);
+            int rollsLeft = 3 - rolls;
+            int aiScore = model.getPlayerScore(1);
+            int humanScore = model.getPlayerScore(0);
+            int scoreDifference = aiScore - humanScore;
+
+            double expectedValue = calculateExpectedValue(remainingDice, rollsLeft, scoreDifference);
 
             if (model.allDiceHeld() && model.isHotDice() && !allHeldDice.isEmpty()) {
-                // show popup message
                 JOptionPane.showMessageDialog(view, "AI has hot dice! Rolling again.", "Hot Dice",
                         JOptionPane.INFORMATION_MESSAGE);
                 model.setIsAnotherTurn(true);
@@ -115,7 +115,6 @@ public class FarkleAI {
                         "AI is banking " + model.getCurrentScore() + " points.", "Banking Points",
                         JOptionPane.INFORMATION_MESSAGE);
                 model.bankPoints();
-                // check for winning condition and then display both players' scores
                 if (model.getPlayerScore(model.getCurrentPlayer()) >= model.getWinningScore()) {
                     JOptionPane.showMessageDialog(view,
                             "AI wins with the game!" +
@@ -146,7 +145,6 @@ public class FarkleAI {
                             "AI is banking " + model.getCurrentScore() + " points.", "Banking Points",
                             JOptionPane.INFORMATION_MESSAGE);
                     model.bankPoints();
-                    // check for winning condition and then display both players' scores
                     if (model.getPlayerScore(model.getCurrentPlayer()) >= model.getWinningScore()) {
                         JOptionPane.showMessageDialog(view,
                                 "AI wins with the game!" +
@@ -162,15 +160,13 @@ public class FarkleAI {
                     view.updateTurnLabel(model.getCurrentPlayer());
                     return;
                 }
-
             }
         }
     }
 
-    // Helper to estimate expected value of rolling N dice
-    private double calculateExpectedValue(int diceCount) {
+    private double calculateExpectedValue(int diceCount, int rollsLeft, int scoreDifference) {
         int[][] allRolls = generateAllRolls(diceCount);
-        double total = 0;
+        double totalScore = 0;
         int validRolls = 0;
 
         for (int[] roll : allRolls) {
@@ -187,15 +183,29 @@ public class FarkleAI {
 
             int score = model.calculateScore(heldDice);
             if (score > 0) {
-                total += score;
+                totalScore += score;
                 validRolls++;
             }
         }
 
-        return validRolls == 0 ? 0 : total / allRolls.length;
+        if (validRolls == 0) return 0;
+
+        double averageScore = totalScore / allRolls.length;
+
+        // Adjustment factor
+        double aggressionFactor = 1.0;
+
+        if (scoreDifference < -1000) {
+            aggressionFactor += 0.3; // losing badly, take more risks
+        } else if (scoreDifference > 1000) {
+            aggressionFactor -= 0.3; // winning comfortably, play safe
+        }
+
+        aggressionFactor += 0.1 * rollsLeft; // more rolls left = more risk okay
+
+        return averageScore * aggressionFactor;
     }
 
-    // Helper to generate all possible rolls of N dice
     private int[][] generateAllRolls(int diceCount) {
         int totalCombos = (int) Math.pow(6, diceCount);
         int[][] rollCombo = new int[totalCombos][diceCount];
@@ -211,7 +221,6 @@ public class FarkleAI {
         return rollCombo;
     }
 
-    // Choose which dice to hold based on score contribution
     private boolean[] chooseScoringDice(List<Integer> diceList) {
         boolean[] hold = new boolean[diceList.size()];
         boolean[] used = new boolean[diceList.size()];
@@ -252,7 +261,6 @@ public class FarkleAI {
         return hold;
     }
 
-    // Helper to count the number of dice not held
     private int getRemainingDiceCount() {
         boolean[] held = model.getHeldDice();
         int count = 0;

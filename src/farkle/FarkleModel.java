@@ -5,7 +5,7 @@ import java.util.*;
 public class FarkleModel {
 
     private static final int NUM_DICE = 6;
-    private static final int WINNING_SCORE = 5000;
+    private static final int WINNING_SCORE = 10000;
 
     private int[] playerScores;
     private int currentScore;
