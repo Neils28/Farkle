@@ -122,6 +122,15 @@ public class FarkleAI {
                         "AI is banking " + model.getCurrentScore() + " points.", "Banking Points",
                         JOptionPane.INFORMATION_MESSAGE);
                 model.bankPoints();
+                // check for winning condition and then display both players' scores
+                if (model.getPlayerScore(model.getCurrentPlayer()) >= model.getWinningScore()) {
+                    JOptionPane.showMessageDialog(view,
+                            "AI wins with the game!" +
+                                    "\nPlayer 1: " + model.getPlayerScore(0) + " points" +
+                                    "\nPlayer 2: " + model.getPlayerScore(1) + " points",
+                            "Game Over", JOptionPane.INFORMATION_MESSAGE);
+                    System.exit(0);
+                }
                 view.updateScoreDisplay(model.getPlayerScore(model.getCurrentPlayer()), model.getCurrentPlayer());
                 model.endTurn();
                 view.resetForNextTurn();
@@ -140,7 +149,7 @@ public class FarkleAI {
                 } else {
                     // show popup message
                     JOptionPane.showMessageDialog(view,
-                            "AI has reached the max rolls and is banking points.", "Max Rolls",
+                            "AI has reached the max rolls, but doesn't have enough points to bank", "Not Enough Points",
                             JOptionPane.INFORMATION_MESSAGE);
                     model.bankPoints();
                     view.updateScoreDisplay(model.getPlayerScore(model.getCurrentPlayer()), model.getCurrentPlayer());
@@ -201,17 +210,124 @@ public class FarkleAI {
     // Choose which dice to hold based on score contribution
     private boolean[] chooseScoringDice(List<Integer> diceList) {
         boolean[] hold = new boolean[diceList.size()];
-        int[] counts = new int[7]; // 1-6
-
+        int[] counts = new int[7];
         for (int die : diceList) {
             counts[die]++;
         }
 
-        // Hold all scoring dice (simplified)
+        // Straight (1-6)
+        boolean isStraight = true;
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] != 1) {
+                isStraight = false;
+                break;
+            }
+        }
+        if (isStraight) {
+            Arrays.fill(hold, true);
+            return hold;
+        }
+
+        // Three pairs
+        int pairCount = 0;
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 2) {
+                pairCount++;
+            }
+        }
+        if (pairCount == 3) {
+            Arrays.fill(hold, true);
+            return hold;
+        }
+
+        // Two triplets
+        List<Integer> triplets = new ArrayList<>();
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 3) {
+                triplets.add(i);
+            }
+        }
+        if (triplets.size() == 2) {
+            for (int triplet : triplets) {
+                int need = 3;
+                for (int i = 0; i < diceList.size(); i++) {
+                    if (diceList.get(i) == triplet && need > 0) {
+                        hold[i] = true;
+                        need--;
+                    }
+                }
+            }
+            return hold;
+        }
+
+        // Four of a kind + a pair
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 4) {
+                for (int j = 1; j <= 6; j++) {
+                    if (i != j && counts[j] == 2) {
+                        Arrays.fill(hold, true);
+                        return hold;
+                    }
+                }
+            }
+        }
+
+        // Six of a kind
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] == 6) {
+                Arrays.fill(hold, true);
+                return hold;
+            }
+        }
+
+        // Five of a kind
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] >= 5) {
+                int need = 5;
+                for (int j = 0; j < diceList.size(); j++) {
+                    if (diceList.get(j) == i && need > 0) {
+                        hold[j] = true;
+                        need--;
+                    }
+                }
+                counts[i] -= 5;
+            }
+        }
+
+        // Four of a kind
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] >= 4) {
+                int need = 4;
+                for (int j = 0; j < diceList.size(); j++) {
+                    if (diceList.get(j) == i && need > 0) {
+                        hold[j] = true;
+                        need--;
+                    }
+                }
+                counts[i] -= 4;
+            }
+        }
+
+        // Three of a kind
+        for (int i = 1; i <= 6; i++) {
+            if (counts[i] >= 3) {
+                int need = 3;
+                for (int j = 0; j < diceList.size(); j++) {
+                    if (diceList.get(j) == i && need > 0) {
+                        hold[j] = true;
+                        need--;
+                    }
+                }
+                counts[i] -= 3;
+            }
+        }
+
+        // Remaining 1s and 5s
         for (int i = 0; i < diceList.size(); i++) {
             int die = diceList.get(i);
-            if (die == 1 || die == 5 || counts[die] >= 3) {
+            if ((die == 1 && counts[1] > 0) || (die == 5 && counts[5] > 0)) {
                 hold[i] = true;
+                counts[die]--;
             }
         }
 

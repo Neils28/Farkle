@@ -88,16 +88,18 @@ public class FarkleController {
         view.getBankPointsButton().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Check for win condition
-                if (model.getPlayerScore(model.getCurrentPlayer()) >= model.getWinningScore()) {
+                // Handle Hot Dice logic — reset for another turn
+                if ((model.getPlayerScore(model.getCurrentPlayer()) + model.getCurrentScore()) >= model
+                        .getWinningScore()) {
                     JOptionPane.showMessageDialog(
                             null,
-                            "Player " + (model.getCurrentPlayer()) + " wins!",
+                            "Player wins the game!" +
+                                    "\nPlayer: " + (model.getPlayerScore(0) + model.getCurrentScore()) +
+                                    "\nAI score: " + model.getPlayerScore(1),
                             "Game Over",
                             JOptionPane.INFORMATION_MESSAGE);
                     System.exit(0);
                 }
-                // Handle Hot Dice logic — reset for another turn
                 if (model.allDiceHeld() && model.isHotDice()) {
                     JOptionPane.showMessageDialog(
                             null,
