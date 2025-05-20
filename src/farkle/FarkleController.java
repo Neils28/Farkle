@@ -8,17 +8,36 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 
+/**
+ * FarkleController serves as the main controller for handling user interactions
+ * and game logic
+ * between the FarkleModel and FarkleView. It sets up listeners and processes
+ * actions like rolling,
+ * selecting dice, banking points, and ending turns.
+ */
 public class FarkleController {
 
     private FarkleModel model;
     private FarkleView view;
     private FarkleAI ai;
 
+    /**
+     * Constructs a FarkleController, initializing the model, view, and AI
+     * components.
+     * Sets up action listeners for dice selection, rolling, banking points, ending
+     * turns,
+     * and displaying the score sheet.
+     * 
+     * @param model the game model
+     * @param view  the game view
+     */
     public FarkleController(FarkleModel model, FarkleView view) {
         this.model = model;
         this.view = view;
         this.ai = new FarkleAI(model, view);
 
+        // Setup dice selection: When a dice radio button is selected, update held dice
+        // and score.
         JRadioButton[] buttons = view.getDiceButtons();
         for (int i = 0; i < buttons.length; i++) {
             final int index = i;
@@ -33,12 +52,11 @@ public class FarkleController {
 
         }
 
-        // Add action listeners to the view components
+        // Handle Roll Dice button logic
         view.getRollButton().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
-                // Check if held dice are scoring dice before rolling
+                // Enforce rule: must hold at least one scoring die before rerolling
                 if (!model.isHoldingScoringDice() && model.getRollsRemaining() < 3) {
                     JOptionPane.showMessageDialog(
                             null,
@@ -48,10 +66,12 @@ public class FarkleController {
                     return;
                 }
 
+                // Update dice display and roll count
                 model.rollDice();
                 view.updateDiceDisplay(model.getDice());
                 view.updateRollsLeft(model.getRollsRemaining());
 
+                // If the roll results in a Farkle, disable further action
                 if (model.isFarkle()) {
                     view.updateFarkleLabel();
                     view.disableRollButton();
@@ -64,19 +84,20 @@ public class FarkleController {
             }
         });
 
+        // Handle Bank Points button logic
         view.getBankPointsButton().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Check for win
+                // Check for win condition
                 if (model.getPlayerScore(model.getCurrentPlayer()) >= model.getWinningScore()) {
                     JOptionPane.showMessageDialog(
                             null,
-                            "Player " + (model.getCurrentPlayer() + 1) + " wins!",
+                            "Player " + (model.getCurrentPlayer()) + " wins!",
                             "Game Over",
                             JOptionPane.INFORMATION_MESSAGE);
                     System.exit(0);
                 }
-                // check if the player has scored at least 500 points
+                // Handle Hot Dice logic — reset for another turn
                 if (model.allDiceHeld() && model.isHotDice()) {
                     JOptionPane.showMessageDialog(
                             null,
@@ -85,12 +106,12 @@ public class FarkleController {
                             JOptionPane.INFORMATION_MESSAGE);
                     model.setIsAnotherTurn(true);
                     model.resetHotDice();
-                    view.resetDiceDisplay();
-                    view.resetRadioButtons();
+                    view.resetForNextTurn();
                     view.updateRollsLeft(model.getRollsRemaining());
                     return;
                 }
 
+                // Enforce first bank rule: minimum 500 points
                 if (model.getCurrentScore() < 500 && model.getPlayerScore(model.getCurrentPlayer()) == 0) {
                     javax.swing.JOptionPane.showMessageDialog(
                             null,
@@ -100,16 +121,14 @@ public class FarkleController {
                     return;
                 }
 
+                // Bank score, update UI and prepare next player's turn
                 model.bankPoints();
                 view.updateScoreDisplay(model.getPlayerScore(model.getCurrentPlayer()),
                         model.getCurrentPlayer());
                 model.endTurn();
                 view.updateTurnLabel(model.getCurrentPlayer());
                 view.updateRollsLeft(model.getRollsRemaining());
-                view.resetDiceDisplay();
-                view.resetRadioButtons();
-                view.resetCurrenScore();
-                view.enableRollButton();
+                view.resetForNextTurn();
 
                 if (model.getCurrentPlayer() == 1) {
                     new Thread(() -> ai.takeTurn()).start();
@@ -117,20 +136,16 @@ public class FarkleController {
             }
         });
 
+        // Handle End Turn button logic (manual override)
         view.getEndTurnButton().addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                // End the turn and update the display
+                // End current turn and transition to next player
                 model.endTurn();
                 view.updateTurnLabel(model.getCurrentPlayer());
                 view.updateRollsLeft(model.getRollsRemaining());
-                view.resetDiceDisplay();
-                view.resetRadioButtons();
-                view.resetCurrenScore();
-                view.enableRollButton();
-                view.resetFarkleLable();
-                view.enableBankPointsButton();
+                view.resetForNextTurn();
 
                 if (model.getCurrentPlayer() == 1) {
                     new Thread(() -> ai.takeTurn()).start();
@@ -138,6 +153,7 @@ public class FarkleController {
             }
         });
 
+        // Display scoring rules in a dialog box
         view.getScoreSheetButton().addActionListener(new ActionListener() {
             // Show a pop up with the scoring rules
             @Override
@@ -159,18 +175,26 @@ public class FarkleController {
 
     }
 
+    /**
+     * updateKeptDiceScore calculates the current turn's score based on selected
+     * dice.
+     * Handles regular scoring and Hot Dice bonus turns.
+     */
     private void updateKeptDiceScore() {
         JRadioButton[] buttons = view.getDiceButtons();
         int[] dice = model.getDice();
         List<Integer> selectedDice = new ArrayList<>();
+        // Gather all selected dice
         for (int i = 0; i < buttons.length; i++) {
             if (buttons[i].isSelected()) {
                 selectedDice.add(dice[i]);
             }
         }
 
+        // Calculate score from selected dice
         int selectedScore = model.calculateScore(selectedDice);
 
+        // Add to score if in a Hot Dice bonus round
         if (model.isAnotherTurn()) {
             int combinedScore = model.getBaseScoreForHotDice() + selectedScore;
             model.setCurrentScore(combinedScore);
@@ -179,6 +203,7 @@ public class FarkleController {
             model.setBaseScoreForHotDice(selectedScore);
         }
 
+        // Update the score display
         view.updateCurrentScore(model.getCurrentScore());
     }
 

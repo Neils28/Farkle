@@ -204,4 +204,13 @@ public class FarkleView extends JFrame {
             diceButtons[i].setSelected(held[i]);
         }
     }
+
+    public void resetForNextTurn() {
+        resetDiceDisplay();
+        resetRadioButtons();
+        resetCurrenScore();
+        resetFarkleLable();
+        enableRollButton();
+        enableBankPointsButton();
+    }
 }

@@ -27,6 +27,11 @@ public class FarkleModel {
         this.heldDice = new boolean[NUM_DICE];
     }
 
+    /**
+     * Rolls the dice that are not held. Updates the rolls remaining and the current
+     * score.
+     * If all dice are held, it resets the rolls remaining to 3.
+     */
     public void rollDice() {
 
         for (int i = 0; i < NUM_DICE; i++) {
@@ -37,6 +42,11 @@ public class FarkleModel {
         rollsRemaining--;
     }
 
+    /**
+     * Checks if the current roll is a Farkle (no scoring dice).
+     * 
+     * @return true if it's a Farkle, false otherwise
+     */
     public boolean isFarkle() {
         List<Integer> rolledDice = new ArrayList<>();
         for (int i = 0; i < NUM_DICE; i++) {
@@ -47,6 +57,12 @@ public class FarkleModel {
         return calculateScore(rolledDice) == 0;
     }
 
+    /**
+     * Calculates the score based on the current dice roll.
+     * 
+     * @param diceList the list of dice to calculate the score for
+     * @return the calculated score
+     */
     public int calculateScore(List<Integer> diceList) {
         int[] counts = new int[7]; // Index 1-6
         for (int die : diceList) {
@@ -137,10 +153,16 @@ public class FarkleModel {
         return score;
     }
 
+    /**
+     * Banks the current score for the current player.
+     */
     public void bankPoints() {
         playerScores[currentPlayer] += currentScore;
     }
 
+    /**
+     * Resets the game state for the next turn.
+     */
     public void endTurn() {
         currentScore = 0;
         rollsRemaining = 3;
@@ -210,6 +232,7 @@ public class FarkleModel {
         return true;
     }
 
+    // Check if all dice are held
     public boolean allDiceHeld() {
         for (boolean held : heldDice) {
             if (!held)
@@ -223,6 +246,11 @@ public class FarkleModel {
         rollsRemaining = 3;
     }
 
+    /**
+     * Checks if the current dice are "hot" (all scoring dice).
+     * 
+     * @return true if all held dice are scoring dice, false otherwise
+     */
     public boolean isHotDice() {
         List<Integer> heldValues = new ArrayList<>();
         int heldCount = 0;
@@ -274,5 +302,9 @@ public class FarkleModel {
 
     public boolean[] getHeldDice() {
         return heldDice;
+    }
+
+    public void addToCurrentScore(int turnPoints) {
+        this.currentScore += turnPoints;
     }
 }

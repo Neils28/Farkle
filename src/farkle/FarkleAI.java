@@ -2,6 +2,8 @@ package farkle;
 
 import java.util.*;
 
+import javax.swing.JOptionPane;
+
 public class FarkleAI {
 
     private FarkleModel model;
@@ -15,13 +17,17 @@ public class FarkleAI {
 
     // Main method AI should call when it's its turn (Player 2)
     public void takeTurn() {
+
         if (model.getCurrentPlayer() != 1 || model.isGameOver()) {
-            return; // Not AI's turn
+            // show popup message
+            JOptionPane.showMessageDialog(view, "It's not AI's turn or the game is over.", "Invalid Turn",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
         }
 
-        while (model.getRollsRemaining() > 0) {
+        int rolls = 0;
 
-            System.out.println("AI is rolling the dice...");
+        while (rolls < 3) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -29,93 +35,122 @@ public class FarkleAI {
             }
 
             model.rollDice();
-            System.out.println("AI rolled: " + Arrays.toString(model.getDice()));
-            int[] dice = model.getDice();
-            view.updateDiceDisplay(dice);
+            rolls++;
+            view.updateDiceDisplay(model.getDice());
             view.updateRollsLeft(model.getRollsRemaining());
 
-            // Check for Farkle
             if (model.isFarkle()) {
-                System.out.println("AI rolled a Farkle! No points this turn.");
-                view.updateFarkleLabel();
+                // show popup message
+                JOptionPane.showMessageDialog(view, "AI rolled a Farkle! No points this turn.", "Farkle",
+                        JOptionPane.INFORMATION_MESSAGE);
                 model.setCurrentScore(0);
-                view.resetCurrenScore();
-                view.resetDiceDisplay();
-                view.resetRadioButtons();
+                view.resetForNextTurn();
                 model.endTurn();
                 view.updateTurnLabel(model.getCurrentPlayer());
                 return;
             }
 
-            List<Integer> rolledDice = new ArrayList<>();
-            for (int die : dice) {
-                rolledDice.add(die);
-            }
+            int[] dice = model.getDice();
+            boolean[] heldAlready = model.getHeldDice();
+            List<Integer> newlyRolledDice = new ArrayList<>();
 
-            System.out.println("AI evaluating scoring dice...");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            boolean[] diceToHold = chooseScoringDice(rolledDice);
-            model.setHeldDice(diceToHold);
-            view.highlightHeldDice(diceToHold);
-
-            List<Integer> heldDiceList = new ArrayList<>();
-            for (int i = 0; i < diceToHold.length; i++) {
-                if (diceToHold[i]) {
-                    heldDiceList.add(dice[i]);
+            for (int i = 0; i < dice.length; i++) {
+                if (!heldAlready[i]) {
+                    newlyRolledDice.add(dice[i]);
                 }
             }
 
-            int turnPoints = model.calculateScore(heldDiceList);
-            System.out.println("AI is keeping: " + heldDiceList + " for " + turnPoints + " points");
-            model.setCurrentScore(model.getCurrentScore() + turnPoints);
-            view.updateCurrentScore(model.getCurrentScore());
+            boolean[] diceToHold = chooseScoringDice(newlyRolledDice);
+            boolean[] updatedHeld = Arrays.copyOf(heldAlready, dice.length);
 
-            System.out.println("AI checking for Hot Dice...");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            int indexInNew = 0;
+            for (int i = 0; i < dice.length; i++) {
+                if (!heldAlready[i]) {
+                    if (indexInNew < diceToHold.length && diceToHold[indexInNew]) {
+                        updatedHeld[i] = true;
+                    }
+                    indexInNew++;
+                }
             }
 
-            if (model.allDiceHeld() && model.isHotDice() && !heldDiceList.isEmpty() && turnPoints > 0) {
-                System.out.println("AI rolled Hot Dice! Resetting.");
-                model.setIsAnotherTurn(true);
-                model.setBaseScoreForHotDice(model.getCurrentScore());
-                model.resetHotDice();
-                continue;
+            model.setHeldDice(updatedHeld);
+            view.highlightHeldDice(updatedHeld);
+
+            List<Integer> heldThisTurn = new ArrayList<>();
+            indexInNew = 0;
+            for (int i = 0; i < dice.length; i++) {
+                if (!heldAlready[i]) {
+                    if (indexInNew < diceToHold.length && diceToHold[indexInNew]) {
+                        heldThisTurn.add(dice[i]);
+                    }
+                    indexInNew++;
+                }
+            }
+
+            int selectedScore = model.calculateScore(heldThisTurn);
+            model.addToCurrentScore(selectedScore);
+            view.updateCurrentScore(model.getCurrentScore());
+
+            if (!model.isAnotherTurn()) {
+                model.setIsAnotherTurn(false);
             }
 
             int remainingDice = getRemainingDiceCount();
             double expectedValue = calculateExpectedValue(remainingDice);
 
-            System.out.println("AI evaluating whether to bank or roll again...");
+            if (model.allDiceHeld() && model.isHotDice() && !heldThisTurn.isEmpty()) {
+                // show popup message
+                JOptionPane.showMessageDialog(view, "AI has hot dice! Rolling again.", "Hot Dice",
+                        JOptionPane.INFORMATION_MESSAGE);
+                model.setIsAnotherTurn(true);
+                model.setBaseScoreForHotDice(model.getCurrentScore());
+                model.resetHotDice();
+                model.setHeldDice(new boolean[6]);
+                rolls = 0;
+                continue;
+            }
+
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            // AI only banks if it has at least 500 points and either:
-            //  - expected value is low
-            //  - no rolls left
-            if ((model.getCurrentScore() >= THRESHOLD_SCORE_TO_BANK && (expectedValue <= 150 || model.getRollsRemaining() == 0))) {
-                System.out.println("AI banks " + model.getCurrentScore() + " points (Expected value: " + expectedValue + ")");
+            if ((model.getCurrentScore() >= THRESHOLD_SCORE_TO_BANK &&
+                    (expectedValue <= 150 || rolls >= 3))) {
+                JOptionPane.showMessageDialog(view,
+                        "AI is banking " + model.getCurrentScore() + " points.", "Banking Points",
+                        JOptionPane.INFORMATION_MESSAGE);
                 model.bankPoints();
-                view.updateScoreDisplay(model.getCurrentScore(), model.getCurrentPlayer());
+                view.updateScoreDisplay(model.getPlayerScore(model.getCurrentPlayer()), model.getCurrentPlayer());
                 model.endTurn();
-                view.resetCurrenScore();
-                view.resetDiceDisplay();
-                view.resetRadioButtons();
+                view.resetForNextTurn();
                 view.updateTurnLabel(model.getCurrentPlayer());
                 return;
             }
 
-            // Else, continue rolling
+            if (rolls >= 3) {
+                if (model.getCurrentScore() >= THRESHOLD_SCORE_TO_BANK) {
+                    // show popup message
+                    JOptionPane.showMessageDialog(view,
+                            "AI has reached the max rolls and is banking points.", "Max Rolls",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    model.bankPoints();
+                    view.updateScoreDisplay(model.getPlayerScore(model.getCurrentPlayer()), model.getCurrentPlayer());
+                } else {
+                    // show popup message
+                    JOptionPane.showMessageDialog(view,
+                            "AI has reached the max rolls and is banking points.", "Max Rolls",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    model.bankPoints();
+                    view.updateScoreDisplay(model.getPlayerScore(model.getCurrentPlayer()), model.getCurrentPlayer());
+                    model.setCurrentScore(0);
+                }
+                model.endTurn();
+                view.resetForNextTurn();
+                view.updateTurnLabel(model.getCurrentPlayer());
+                return;
+            }
         }
     }
 
